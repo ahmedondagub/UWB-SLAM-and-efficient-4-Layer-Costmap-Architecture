@@ -4,7 +4,6 @@ Provides core algorithms for range-based localization and Kalman filtering.
 """
 
 import math
-import os
 
 import numpy as np
 from typing import Tuple, List, Optional
@@ -34,6 +33,7 @@ def parse_anchor_positions(value) -> np.ndarray:
 
 def attach_debugger_if_requested() -> None:
     """Attach a waiting debugpy session if ROS_DEBUG_PORT is set."""
+    import os  # noqa: PLC0415  (lazy import — only when this utility is called)
     port_str = os.environ.get('ROS_DEBUG_PORT')
     if port_str:
         import debugpy  # noqa: PLC0415  (lazy import — only when debugging)
