@@ -1,4 +1,5 @@
 UWB SLAM Project
+
 This package implements a TurtleBot 4 autonomy stack for ROS 2 Jazzy and Gazebo Harmonic.
 
 The active runtime is Nav2-first. Python handles mission orchestration, ESKF fusion, and UWB tooling. Nav2 owns the costmaps, planner, controller, and velocity smoothing.
