@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>uwb_slam</name>
+  <version>0.1.0</version>
+  <description>UWB-integrated SLAM with 4-layer map architecture and ESKF sensor fusion for TurtleBot 4</description>
+  <maintainer email="yakubiantechnologist@todo.todo">yakubiantechnologist</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Core ROS 2 dependencies -->
+  <depend>rclpy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>nav2_msgs</depend>
+  <depend>nav2_map_server</depend>
+  <depend>nav2_lifecycle_manager</depend>
+  <depend>nav2_planner</depend>
+  <depend>nav2_controller</depend>
+  <depend>nav2_bt_navigator</depend>
+  <depend>nav2_behaviors</depend>
+  <depend>rf2o_laser_odometry</depend>
+  <depend>visualization_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>rosgraph_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>ament_index_python</depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-psutil</exec_depend>
+  
+  <!-- Mapping and navigation -->
+  <depend>costmap_2d</depend>
+  <depend>nav_core</depend>
+  <depend>pluginlib</depend>
+  <depend>nav2_velocity_smoother</depend>
+  
+  <!-- Gazebo and simulation -->
+  <depend>gazebo_ros</depend>
+  <depend>gazebo_msgs</depend>
+  
+  <!-- Build and test -->
+  <depend>ament_cmake</depend>
+  <depend>ament_cmake_python</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
