@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Adapt Odometry messages into PoseWithCovarianceStamped for ESKF LiDAR updates."""
 
-import os
-
 import rclpy
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from uwb_slam.math_utils import attach_debugger_if_requested
 
 _WATCHDOG_STALE_SEC = 5.0
 
@@ -64,18 +64,8 @@ class LidarPoseAdapterNode(Node):
             )
 
 
-def _attach_debugger_if_requested() -> None:
-    """Attach a waiting debugpy session if ROS_DEBUG_PORT is set."""
-    port_str = os.environ.get('ROS_DEBUG_PORT')
-    if port_str:
-        import debugpy  # noqa: PLC0415
-        debugpy.listen(('localhost', int(port_str)))
-        print(f'[debugpy] Waiting for VS Code debugger on port {port_str}...')
-        debugpy.wait_for_client()
-
-
 def main(args=None):
-    _attach_debugger_if_requested()
+    attach_debugger_if_requested()
     rclpy.init(args=args)
     node = LidarPoseAdapterNode()
 

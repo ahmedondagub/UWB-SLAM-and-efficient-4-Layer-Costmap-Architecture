@@ -3,9 +3,43 @@ Math utilities for UWB trilateration and ESKF sensor fusion.
 Provides core algorithms for range-based localization and Kalman filtering.
 """
 
+import math
+import os
+
 import numpy as np
 from typing import Tuple, List, Optional
-import math
+
+
+def parse_anchor_positions(value) -> np.ndarray:
+    """Parse anchor_positions parameter into an Nx2 float array.
+
+    Accepts a flat list/array [x1, y1, x2, y2, ...], an Nx2 array, or a
+    string representation thereof (as received from ROS 2 parameter server).
+    """
+    if isinstance(value, str):
+        import ast
+        try:
+            value = ast.literal_eval(value)
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f'anchor_positions: failed to parse string value: {e}') from e
+    arr = np.array(value, dtype=float)
+    if arr.ndim == 1:
+        if arr.size < 6 or (arr.size % 2) != 0:
+            raise ValueError('anchor_positions must be [x1, y1, x2, y2, ...] with at least 3 anchors')
+        arr = arr.reshape((-1, 2))
+    elif not (arr.ndim == 2 and arr.shape[1] == 2):
+        raise ValueError('anchor_positions must be Nx2 or flat [x1, y1, x2, y2, ...]')
+    return arr
+
+
+def attach_debugger_if_requested() -> None:
+    """Attach a waiting debugpy session if ROS_DEBUG_PORT is set."""
+    port_str = os.environ.get('ROS_DEBUG_PORT')
+    if port_str:
+        import debugpy  # noqa: PLC0415  (lazy import — only when debugging)
+        debugpy.listen(('localhost', int(port_str)))
+        print(f'[debugpy] Waiting for VS Code debugger on port {port_str}...')
+        debugpy.wait_for_client()
 
 
 class Trilateration:
@@ -49,10 +83,6 @@ class Trilateration:
         if guess.shape != (2,) or not np.all(np.isfinite(guess)):
             raise ValueError('Initial guess must be a finite (x, y) tuple')
         return guess
-
-    @staticmethod
-    def _symmetrize(matrix: np.ndarray) -> np.ndarray:
-        return 0.5 * (matrix + matrix.T)
 
     def _solve_position(
         self,

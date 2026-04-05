@@ -17,11 +17,13 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 import numpy as np
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Range
 from std_msgs.msg import Float32MultiArray
 from nav_msgs.msg import Odometry
 import math
+
+from uwb_slam.math_utils import parse_anchor_positions
 
 
 class UWBVirtualSensor(Node):
@@ -46,20 +48,7 @@ class UWBVirtualSensor(Node):
         
         # Get parameters
         anchor_list = self.get_parameter('anchor_positions').value
-        if isinstance(anchor_list, str):
-            import ast
-            try:
-                anchor_list = ast.literal_eval(anchor_list)
-            except (ValueError, SyntaxError) as e:
-                raise ValueError(f'anchor_positions: failed to parse string value: {e}') from e
-        anchor_array = np.array(anchor_list, dtype=float)
-        if anchor_array.ndim == 1:
-            if anchor_array.size < 6 or (anchor_array.size % 2) != 0:
-                raise ValueError('anchor_positions must be [x1, y1, x2, y2, ...] with at least 3 anchors')
-            anchor_array = anchor_array.reshape((-1, 2))
-        elif not (anchor_array.ndim == 2 and anchor_array.shape[1] == 2):
-            raise ValueError('anchor_positions must be Nx2 or flat [x1, y1, x2, y2, ...]')
-        self.anchor_positions = anchor_array
+        self.anchor_positions = parse_anchor_positions(anchor_list)
         self.range_noise_std = self.get_parameter('range_noise_std').value
         self.range_bias_max = self.get_parameter('range_bias_max').value
         self.max_range = self.get_parameter('max_range').value

@@ -17,10 +17,10 @@ from typing import Optional
 
 import numpy as np
 from std_msgs.msg import Float32MultiArray
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+from geometry_msgs.msg import PoseStamped, Point, Quaternion
 from std_msgs.msg import Float32
 
-from uwb_slam.math_utils import Trilateration
+from uwb_slam.math_utils import Trilateration, parse_anchor_positions
 
 
 class TrilaterationNode(Node):
@@ -40,20 +40,7 @@ class TrilaterationNode(Node):
         
         # Get parameters
         anchor_list = self.get_parameter('anchor_positions').value
-        if isinstance(anchor_list, str):
-            import ast
-            try:
-                anchor_list = ast.literal_eval(anchor_list)
-            except (ValueError, SyntaxError) as e:
-                raise ValueError(f'anchor_positions: failed to parse string value: {e}') from e
-        anchor_array = np.array(anchor_list, dtype=float)
-        if anchor_array.ndim == 1:
-            if anchor_array.size < 6 or (anchor_array.size % 2) != 0:
-                raise ValueError('anchor_positions must be [x1, y1, x2, y2, ...] with at least 3 anchors')
-            anchor_array = anchor_array.reshape((-1, 2))
-        elif not (anchor_array.ndim == 2 and anchor_array.shape[1] == 2):
-            raise ValueError('anchor_positions must be Nx2 or flat [x1, y1, x2, y2, ...]')
-        self.anchor_positions = anchor_array
+        self.anchor_positions = parse_anchor_positions(anchor_list)
         self.use_weighted_solve = self.get_parameter('use_weighted_solve').value
         
         # Initialize trilateration solver
@@ -110,7 +97,7 @@ class TrilaterationNode(Node):
         
         try:
             # Solve trilateration
-            if self.use_weighted_solve and len(ranges) == len(self.anchor_positions):
+            if self.use_weighted_solve:
                 # Use weights based on range measurement confidence
                 # Closer ranges = higher confidence
                 weights = np.array([1.0 / max(r, 0.1) for r in ranges])

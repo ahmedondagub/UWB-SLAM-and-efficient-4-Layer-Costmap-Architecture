@@ -16,7 +16,7 @@ setup(
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*'))),
         (os.path.join('share', package_name, 'maps'), glob(os.path.join('maps', '*'))),
     ],
-    install_requires=['setuptools', 'numpy', 'scipy', 'psutil'],
+    install_requires=['setuptools', 'numpy'],
     zip_safe=True,
     maintainer='yakubiantechnologist',
     maintainer_email='yakubiantechnologist@todo.todo',

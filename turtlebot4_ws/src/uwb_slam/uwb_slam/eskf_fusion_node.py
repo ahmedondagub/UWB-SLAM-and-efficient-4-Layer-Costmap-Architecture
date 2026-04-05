@@ -2,11 +2,9 @@
 """ESKF Sensor Fusion Node with dual-stack scheduling and UWB NLOS gating."""
 
 import math
-import os
 
 import rclpy
 from rclpy.node import Node
-from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
@@ -19,16 +17,11 @@ from std_msgs.msg import Float32MultiArray, String
 from nav_msgs.msg import Odometry
 from tf2_ros import TransformBroadcaster
 
-from uwb_slam.math_utils import ErrorStateKalmanFilter
+from uwb_slam.math_utils import ErrorStateKalmanFilter, parse_anchor_positions, attach_debugger_if_requested
 
 
 STACK_1 = 'stack1'
 STACK_2 = 'stack2'
-
-
-def _wrap_angle(angle: float) -> float:
-    """Wrap angles to [-pi, pi]."""
-    return math.atan2(math.sin(angle), math.cos(angle))
 
 
 def _yaw_to_quaternion(yaw: float) -> tuple[float, float, float, float]:
@@ -85,7 +78,7 @@ class ESKFFusionNode(Node):
         if self.operating_stack not in (STACK_1, STACK_2):
             self.operating_stack = STACK_2
 
-        self.anchor_positions = self._parse_anchor_positions(anchor_list)
+        self.anchor_positions = parse_anchor_positions(anchor_list)
 
         # Initialize ESKF
         self.filter = ErrorStateKalmanFilter(
@@ -279,25 +272,6 @@ class ESKFFusionNode(Node):
                 self._lidar_absent_logged_at_ns = now_ns
         if self.operating_stack == STACK_2 and self.last_uwb_stamp_ns == 0:
             self.get_logger().warning('[watchdog] UWB ranges never received (stack2 active)')
-
-    def _parse_anchor_positions(self, value):
-        """Normalize anchor positions into an Nx2 float array."""
-        if isinstance(value, str):
-            import ast
-            try:
-                value = ast.literal_eval(value)
-            except (ValueError, SyntaxError) as e:
-                raise ValueError(f'anchor_positions: failed to parse string value: {e}') from e
-        arr = np.array(value, dtype=float)
-        if arr.ndim == 1:
-            if arr.size < 6 or (arr.size % 2) != 0:
-                raise ValueError('anchor_positions must contain an even number of values: [x1, y1, x2, y2, ...]')
-            arr = arr.reshape((-1, 2))
-        elif arr.ndim == 2 and arr.shape[1] == 2:
-            pass
-        else:
-            raise ValueError('anchor_positions must be shaped as Nx2 or flat [x1, y1, x2, y2, ...]')
-        return arr
 
     def on_set_parameters(self, params):
         """Allow runtime mode switches between stack1 and stack2."""
@@ -588,7 +562,7 @@ class ESKFFusionNode(Node):
 
         if self.latest_odom_pose is not None:
             odom_x, odom_y = self.latest_odom_pose
-            yaw_diff = _wrap_angle(filtered_yaw - self.latest_odom_yaw)
+            yaw_diff = ErrorStateKalmanFilter.wrap_angle(filtered_yaw - self.latest_odom_yaw)
             cos_y = math.cos(yaw_diff)
             sin_y = math.sin(yaw_diff)
             tx = float(map_x - (cos_y * odom_x - sin_y * odom_y))
@@ -623,18 +597,8 @@ class ESKFFusionNode(Node):
         self.covariance_pub.publish(msg)
 
 
-def _attach_debugger_if_requested() -> None:
-    """Attach a waiting debugpy session if ROS_DEBUG_PORT is set."""
-    port_str = os.environ.get('ROS_DEBUG_PORT')
-    if port_str:
-        import debugpy  # noqa: PLC0415  (lazy import — only when debugging)
-        debugpy.listen(('localhost', int(port_str)))
-        print(f'[debugpy] Waiting for VS Code debugger on port {port_str}...')
-        debugpy.wait_for_client()
-
-
 def main(args=None):
-    _attach_debugger_if_requested()
+    attach_debugger_if_requested()
     rclpy.init(args=args)
     node = ESKFFusionNode()
 

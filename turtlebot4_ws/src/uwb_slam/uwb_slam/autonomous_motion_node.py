@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import os
 import time
 
 import rclpy
@@ -15,6 +14,8 @@ from action_msgs.msg import GoalStatus
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from visualization_msgs.msg import Marker, MarkerArray
+
+from uwb_slam.math_utils import attach_debugger_if_requested
 
 
 PATH_PLANNING = 'path_planning'
@@ -450,18 +451,8 @@ class AutonomousMotionNode(Node):
         self.publish_markers()
 
 
-def _attach_debugger_if_requested() -> None:
-    """Attach a waiting debugpy session if ROS_DEBUG_PORT is set."""
-    port_str = os.environ.get('ROS_DEBUG_PORT')
-    if port_str:
-        import debugpy  # noqa: PLC0415  (lazy import — only when debugging)
-        debugpy.listen(('localhost', int(port_str)))
-        print(f'[debugpy] Waiting for VS Code debugger on port {port_str}...')
-        debugpy.wait_for_client()
-
-
 def main(args=None):
-    _attach_debugger_if_requested()
+    attach_debugger_if_requested()
     rclpy.init(args=args)
     node = AutonomousMotionNode()
 
