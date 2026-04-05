@@ -34,6 +34,7 @@ setup(
             'eskf_fusion_node=uwb_slam.eskf_fusion_node:main',
             'autonomous_motion_node=uwb_slam.autonomous_motion_node:main',
             'lidar_pose_adapter_node=uwb_slam.lidar_pose_adapter_node:main',
+            'gazebo_world_to_map=uwb_slam.gazebo_world_to_map:main',
         ],
     },
 )
